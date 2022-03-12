@@ -1,8 +1,18 @@
 package com.parallel;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
+
+import static java.lang.Math.abs;
+import static java.lang.Math.sqrt;
+
+/**
+ * @logic f(x+1)=f(x)-scale(Af(x)-b)
+ * @end if u/v < epsilon then
+ *      u = norm(Ax-b)
+ *      v = norm(b)
+ *
+ */
 public interface Simple_Iteration {
     int VectorSize = 500;
     int MatrixHight = 500;
@@ -12,10 +22,25 @@ public interface Simple_Iteration {
     void initA(List<Double> A);
     void initB(Vector<Double> b);
     void initX(Vector<Double> x);
-    List<Double> mulMatrixOnVector(List<Double> A, Vector<Double> x);
-    double takeNorm(Vector<Double> vector);
-    Vector<Double> mulVectorOnConst(Vector<Double> x, double t);
-    Vector<Double> subVectorFromVector(Vector<Double> x, Vector<Double> y);
+    List<Double> mulMatrixOnVector(List<Double> A, Vector<Double> x, int countThreads);
+    static double takeNorm(Vector<Double> vector){
+        double sum=0;
+        for(int i=0;i<VectorSize;i++){
+            sum+=vector.get(i);
+        }
+        return sqrt(abs(sum));
+    }
+    static void mulVectorOnConst(Vector<Double> x, double t) {
+        for(int row=0;row<VectorSize;row++){
+            x.set(row,x.get(row)*t);
+        }
+    }
+    static Vector<Double> subVectorFromVector(Vector<Double> x, Vector<Double> y){
+        for(int row=0;row<VectorSize;row++){
+            x.set(row,x.get(row)-y.get(row));
+        }
+        return x;
+    }
 
     /**
      * @return Performs the next calculation step according to the simple iteration formula

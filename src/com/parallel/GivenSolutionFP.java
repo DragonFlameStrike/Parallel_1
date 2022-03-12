@@ -4,24 +4,22 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
 
-import static java.lang.Math.*;
-
-public class GivenSolutionNP implements Simple_Iteration{
-
+public class GivenSolutionFP implements Simple_Iteration{
+    public static final int NumberOfThreads = 1;
     public static void main(String[] args) {
         Vector<Double> Ax;
         List<Double> A = new ArrayList<>(); //matrix
         Vector<Double> b = new Vector<>(); //vector
         Vector<Double> x = new Vector<>(); //vector
 
-        GivenSolutionNP methods = new GivenSolutionNP();
+        GivenSolutionFP methods = new GivenSolutionFP();
         methods.initA(A);
         methods.initB(b);
         methods.initX(x);
         boolean flag;
         long startTime = System.nanoTime();
         do {
-            Ax = methods.mulMatrixOnVector(A,x,1);
+            Ax = methods.mulMatrixOnVector(A,x,0);
             flag = methods.isDone(Ax,b);
             x = methods.step(Ax,b,x);
             //System.out.println(x);
@@ -43,14 +41,12 @@ public class GivenSolutionNP implements Simple_Iteration{
             }
         }
     }
-
     @Override
     public void initB(Vector<Double> b) {
         for(int i=0;i<VectorSize;i++){
             b.add(VectorSize+1.0);
         }
     }
-
     @Override
     public void initX(Vector<Double> x) {
         for(int i=0;i<VectorSize;i++){
@@ -58,19 +54,22 @@ public class GivenSolutionNP implements Simple_Iteration{
         }
     }
     @Override
-    public Vector<Double> mulMatrixOnVector(List<Double> A, Vector<Double> x ,int countThreads) {
+    public Vector<Double> mulMatrixOnVector(List<Double> A, Vector<Double> x, int currThread) {
         Vector<Double> Ax = new Vector<>(VectorSize);
-        for (int row = 0; row < MatrixHight; row++) {
+        for (int i=0;i<VectorSize;i++){
+            Ax.add((double) 0);
+        }
+        int currRow = currThread*MatrixHight/NumberOfThreads;
+        for (int i = 0; i < (MatrixHight / NumberOfThreads); currRow++, i++) {
             double sumOfElements = 0;
             for (int column = 0; column < MatrixWeight; column++) {
-                sumOfElements += A.get(row * MatrixWeight + column);
+                sumOfElements += A.get(currRow * MatrixWeight + column);
             }
-            sumOfElements *= x.get(row);
-            Ax.add(row, sumOfElements);
+            sumOfElements *= x.get(currRow);
+            Ax.set(currRow, sumOfElements);
         }
         return Ax;
     }
-
     @Override
     public Vector<Double> step(Vector<Double> Ax,Vector<Double> b, Vector<Double> x) {
         Object tmpAx = Ax.clone();
@@ -79,7 +78,6 @@ public class GivenSolutionNP implements Simple_Iteration{
         tmp = Simple_Iteration.subVectorFromVector(x, tmp);
         return tmp;
     }
-
     @Override
     public boolean isDone(Vector<Double> Ax,Vector<Double> b) {
         Object tmpAx = Ax.clone();
