@@ -4,12 +4,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
 
-import static java.lang.Math.*;
 
 public class GivenSolutionNP implements Simple_Iteration{
 
     public static void main(String[] args) {
-        Vector<Double> Ax;
+        Vector<Double> Ax = new Vector<>(VectorSize);
         List<Double> A = new ArrayList<>(); //matrix
         Vector<Double> b = new Vector<>(); //vector
         Vector<Double> x = new Vector<>(); //vector
@@ -21,7 +20,7 @@ public class GivenSolutionNP implements Simple_Iteration{
         boolean flag;
         long startTime = System.nanoTime();
         do {
-            Ax = methods.mulMatrixOnVector(A,x,1);
+            Ax = methods.mulMatrixOnVector(A,x,1,Ax);
             flag = methods.isDone(Ax,b);
             x = methods.step(Ax,b,x);
             //System.out.println(x);
@@ -58,17 +57,16 @@ public class GivenSolutionNP implements Simple_Iteration{
         }
     }
     @Override
-    public Vector<Double> mulMatrixOnVector(List<Double> A, Vector<Double> x ,int countThreads) {
-        Vector<Double> Ax = new Vector<>(VectorSize);
+    public Vector<Double> mulMatrixOnVector(List<Double> A, Vector<Double> x ,int countThreads,Vector<Double> result) {
         for (int row = 0; row < MatrixHight; row++) {
             double sumOfElements = 0;
             for (int column = 0; column < MatrixWeight; column++) {
                 sumOfElements += A.get(row * MatrixWeight + column);
             }
             sumOfElements *= x.get(row);
-            Ax.add(row, sumOfElements);
+            result.add(row, sumOfElements);
         }
-        return Ax;
+        return result;
     }
 
     @Override

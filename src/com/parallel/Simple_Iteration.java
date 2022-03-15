@@ -14,15 +14,15 @@ import static java.lang.Math.sqrt;
  *
  */
 public interface Simple_Iteration {
-    int VectorSize = 500;
-    int MatrixHight = 500;
-    int MatrixWeight = 500;
+    int VectorSize = 1000;
+    int MatrixHight = 1000;
+    int MatrixWeight = 1000;
     double epsilon = 0.000001;
     double scale = epsilon*10;
     void initA(List<Double> A);
     void initB(Vector<Double> b);
     void initX(Vector<Double> x);
-    List<Double> mulMatrixOnVector(List<Double> A, Vector<Double> x, int countThreads);
+    List<Double> mulMatrixOnVector(List<Double> A, Vector<Double> x, int countThreads,Vector<Double> result);
     static double takeNorm(Vector<Double> vector){
         double sum=0;
         for(int i=0;i<VectorSize;i++){
