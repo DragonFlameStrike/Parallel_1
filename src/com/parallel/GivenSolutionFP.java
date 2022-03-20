@@ -5,35 +5,42 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Vector;
 
-public class GivenSolutionFP implements Simple_Iteration {
-    public static final int NumberOfThreads = 2;
+public class GivenSolutionFP extends Simple_Iteration {
+    public static final int NumberOfThreads = 8;
 
     public static void main(String[] args) throws InterruptedException {
+        for(int j=0;j<6;j++) {
+            Vector<Double> Ax = new Vector<>(VectorSize);
+            List<Double> A = new ArrayList<>(); //matrix
+            Vector<Double> b = new Vector<>(); //vector
+            Vector<Double> x = new Vector<>(); //vector
 
-        Vector<Double> Ax = new Vector<>(VectorSize);
-        List<Double> A = new ArrayList<>(); //matrix
-        Vector<Double> b = new Vector<>(); //vector
-        Vector<Double> x = new Vector<>(); //vector
+            GivenSolutionFP methods = new GivenSolutionFP();
+            methods.initA(A);
+            methods.initB(b);
+            methods.initX(x);
 
-        GivenSolutionFP methods = new GivenSolutionFP();
-        methods.initA(A);
-        methods.initB(b);
-        methods.initX(x);
+            ArrayList<Boolean> tasks = new ArrayList<>();
+            ArrayList<matrixThread> threads = new ArrayList<>();
 
-        ArrayList<Boolean> tasks = new ArrayList<>();
-        ArrayList<matrixThread> threads = new ArrayList<>();
-
-        boolean flag = false;
-        checkerThread checker = new checkerThread(flag,Ax,b,x,threads);
-        for (int i = 0; i < NumberOfThreads; i++) {
-            tasks.add(true);
-            threads.add(new matrixThread(i, x, Ax, A, checker));
+            boolean flag = false;
+            checkerThread checker = new checkerThread(flag, Ax, b, x, threads);
+            for (int i = 0; i < NumberOfThreads; i++) {
+                tasks.add(true);
+                threads.add(new matrixThread(i, x, Ax, A, checker));
+            }
+            checker.setThreads(threads);
+            for (matrixThread thread : threads) {
+                thread.start();
+            }
+            checker.start();
+            while(true){
+                if(checker.getFlag()){
+                    break;
+                }
+                else Thread.sleep(10);
+            }
         }
-        checker.setThreads(threads);
-        for(matrixThread thread: threads){
-            thread.start();
-        }
-        checker.start();
     }
 
     @Override
@@ -115,7 +122,7 @@ public class GivenSolutionFP implements Simple_Iteration {
             this.A=A;
             this.Ax=Ax;
             this.checker = checker;
-            System.out.println("Создание " + currThread);
+            //System.out.println("Создание " + currThread);
         }
 
         public void run() {
@@ -123,23 +130,26 @@ public class GivenSolutionFP implements Simple_Iteration {
             try {
                 while (!over) {
                     //System.out.println("Поток: " + currThread);
+                    long startTime = System.nanoTime();
                     mulMatrixOnVector(A,x,currThread,Ax);
                     suspended = true;
+                    //System.out.println("Поток "+currThread+" завершил работу за "+(System.nanoTime()-startTime)/1000000000.0);
                     synchronized (this) {
                         while (suspended) {
                             checker.resume();
                             wait();
                         }
                     }
+
                 }
             } catch (InterruptedException e) {
-                System.out.println("Поток " + currThread + " прерван.");
+                //System.out.println("Поток " + currThread + " прерван.");
             }
-            System.out.println("Поток " + currThread + " завершается.");
+            //System.out.println("Поток " + currThread + " завершается.");
         }
 
         public void start() {
-            System.out.println("Запуск " + currThread);
+            //System.out.println("Запуск " + currThread);
             if (t == null) {
                 t = new Thread(this, String.valueOf(currThread));
                 t.start();
@@ -203,7 +213,7 @@ public class GivenSolutionFP implements Simple_Iteration {
                 }
 
             } catch (InterruptedException e) {
-                System.out.println("checkerThread прерван.");
+                //System.out.println("checkerThread прерван.");
             }
             for (matrixThread thread : threads) {
                 thread.over();

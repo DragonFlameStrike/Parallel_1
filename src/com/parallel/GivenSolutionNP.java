@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Vector;
 
 
-public class GivenSolutionNP implements Simple_Iteration{
+public class GivenSolutionNP extends Simple_Iteration{
 
     public static void main(String[] args) {
         Vector<Double> Ax = new Vector<>(VectorSize);

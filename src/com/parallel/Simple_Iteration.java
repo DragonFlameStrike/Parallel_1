@@ -13,16 +13,16 @@ import static java.lang.Math.sqrt;
  *      v = norm(b)
  *
  */
-public interface Simple_Iteration {
-    int VectorSize = 1000;
-    int MatrixHight = 1000;
-    int MatrixWeight = 1000;
+public abstract class Simple_Iteration {
+    static int VectorSize = 8192;
+    static int MatrixHight = 8192;
+    static int MatrixWeight = 8192;
     double epsilon = 0.000001;
     double scale = epsilon*10;
-    void initA(List<Double> A);
-    void initB(Vector<Double> b);
-    void initX(Vector<Double> x);
-    List<Double> mulMatrixOnVector(List<Double> A, Vector<Double> x, int countThreads,Vector<Double> result);
+    abstract void initA(List<Double> A);
+    abstract void initB(Vector<Double> b);
+    abstract void initX(Vector<Double> x);
+    abstract List<Double> mulMatrixOnVector(List<Double> A, Vector<Double> x, int countThreads,Vector<Double> result);
     static double takeNorm(Vector<Double> vector){
         double sum=0;
         for(int i=0;i<VectorSize;i++){
@@ -45,9 +45,9 @@ public interface Simple_Iteration {
     /**
      * @return Performs the next calculation step according to the simple iteration formula
      */
-    Vector<Double> step(Vector<Double> Ax,Vector<Double> b,Vector<Double> x);
+    abstract Vector<Double> step(Vector<Double> Ax,Vector<Double> b,Vector<Double> x);
     /**
      * @return returns true if the calculation resulted in an answer
      */
-    boolean isDone(Vector<Double> Ax,Vector<Double> b);
+    abstract boolean isDone(Vector<Double> Ax,Vector<Double> b);
 }
