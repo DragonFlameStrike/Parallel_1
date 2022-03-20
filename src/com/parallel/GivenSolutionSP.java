@@ -1,11 +1,13 @@
 package com.parallel;
 
+
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
 
-public class GivenSolutionFP extends Simple_Iteration {
-    public static final int NumberOfThreads = 1;
+public class GivenSolutionSP extends Simple_Iteration {
+    public static final int NumberOfThreads = 16;
 
     public static void main(String[] args) throws InterruptedException {
         for(int j=0;j<3;j++) {
@@ -13,23 +15,23 @@ public class GivenSolutionFP extends Simple_Iteration {
             System.out.println();
 
             ArrayList<Boolean> tasks = new ArrayList<>();
-            ArrayList<workerThread> workers = new ArrayList<>();
+            ArrayList<workerThreadSecond> workers = new ArrayList<>();
 
             boolean flag = false;
             /*
              * Init Checker and Worker threads
              */
-            checkerThread checker = new checkerThread(flag, workers);
+            checkerThreadSecond checker = new checkerThreadSecond(flag, workers);
             for (int currThread = 0; currThread < NumberOfThreads; currThread++) {
                 tasks.add(true);
 
-                workers.add(new workerThread(currThread, checker));
+                workers.add(new workerThreadSecond(currThread, checker));
             }
             /*
              *  Connect Checker and Workers to use wait and notify
              */
             checker.setThreads(workers);
-            for (workerThread worker : workers) {
+            for (workerThreadSecond worker : workers) {
                 worker.start();
             }
             checker.start();
@@ -65,6 +67,11 @@ public class GivenSolutionFP extends Simple_Iteration {
 
     @Override
     public void initX(Vector<Double> x) {
+        for (int i = 0; i < VectorSize/NumberOfThreads; i++) {
+            x.add((double) 10);
+        }
+    }
+    public void initCheckerX(Vector<Double> x){
         for (int i = 0; i < VectorSize; i++) {
             x.add((double) 10);
         }
@@ -77,7 +84,7 @@ public class GivenSolutionFP extends Simple_Iteration {
         for (int i = 0; i < (MatrixHight / NumberOfThreads); currRow++, i++) {
             double sumOfElements = 0;
             for (int column = 0; column < MatrixWeight; column++) {
-                sumOfElements += partOfA.get(i * MatrixWeight + column) * x.get(column);
+                sumOfElements += partOfA.get(i * MatrixWeight + column) * x.get(i);
             }
             result.set(currRow, sumOfElements);
         }
@@ -101,22 +108,22 @@ public class GivenSolutionFP extends Simple_Iteration {
         return ((u / v) < epsilon);
     }
 }
-class workerThread extends GivenSolutionFP implements Runnable {
+class workerThreadSecond extends GivenSolutionSP implements Runnable {
     public Thread t;
     boolean suspended = false;
     boolean over = false;
     int currThread;
     double totalTime = 0;
-    Vector<Double> x = new Vector<>();
+    Vector<Double> partOfX = new Vector<>();
     Vector<Double> Ax = new Vector<>();
-    List<Double> partOfA;
-    checkerThread checker;
+    List<Double> transpPartOfA;
+    checkerThreadSecond checker;
     double workerTime;
 
-    workerThread(int currThread, checkerThread checker) {
+    workerThreadSecond(int currThread, checkerThreadSecond checker) {
         this.currThread = currThread;
-        initX(this.x);
-        partOfA = initA();
+        initX(this.partOfX);
+        transpPartOfA = initA();
         for (int i = 0; i < VectorSize; i++) Ax.add((double) 0);
         this.checker = checker;
         //System.out.println("Создание " + currThread);
@@ -128,9 +135,8 @@ class workerThread extends GivenSolutionFP implements Runnable {
             while (!over) {
                 //System.out.println("Поток: " + currThread);
                 long startTime = System.nanoTime();
-                Vector<Double> tempX = checker.getX();
-                for (int i = 0; i < tempX.size(); i++) x.set(i, tempX.get(i));
-                mulMatrixOnVector(partOfA, x, currThread, Ax);
+                for (int i = 0; i < VectorSize/NumberOfThreads; i++) partOfX.set(i, checker.getXbyIndex(i+currThread*VectorSize/NumberOfThreads));
+                mulMatrixOnVector(transpPartOfA, partOfX, currThread, Ax);
 
                 suspended = true;
                 //System.out.println("Поток "+currThread+" завершил работу за "+(System.nanoTime()-startTime)/1000000000.0);
@@ -201,7 +207,7 @@ class workerThread extends GivenSolutionFP implements Runnable {
         return workerTime;
     }
 }
-class checkerThread extends GivenSolutionFP implements Runnable {
+class checkerThreadSecond extends GivenSolutionSP implements Runnable {
     long startTime = System.nanoTime();
     public Thread t;
     int countResume = 0;
@@ -210,17 +216,17 @@ class checkerThread extends GivenSolutionFP implements Runnable {
     Vector<Double> Ax;
     Vector<Double> b = new Vector<>();
     Vector<Double> x = new Vector<>();
-    ArrayList<workerThread> threads;
+    ArrayList<workerThreadSecond> threads;
     boolean firstStep = true;
     double totalTime = 0;
     double checkerMaxTime = 0;
 
-    checkerThread(boolean flag, ArrayList<workerThread> threads) {
+    checkerThreadSecond(boolean flag, ArrayList<workerThreadSecond> threads) {
         this.flag = flag;
         Ax = new Vector<Double>();
         for (int i = 0; i < VectorSize; i++) Ax.add((double) 0);
         initB(b);
-        initX(x);
+        initCheckerX(x);
         this.threads = threads;
         //System.out.println("Создание checkerThread");
     }
@@ -233,16 +239,16 @@ class checkerThread extends GivenSolutionFP implements Runnable {
                         wait();
                     }
                 }
+                long time = System.nanoTime();
                 double maxTime = 0;
-                for (workerThread thread : threads) {
+                for (workerThreadSecond thread : threads) {
                     if (thread.getWorkerTime() > maxTime) maxTime = thread.getWorkerTime();
                 }
                 checkerMaxTime += maxTime;
-                long time = System.nanoTime();
                 //System.out.println("Выолнение checkerThread");
                 suspended = true;
                 for (int i = 0; i < VectorSize; i++) Ax.set(i, (double) 0);
-                for (workerThread thread : threads) {
+                for (workerThreadSecond thread : threads) {
                     Vector<Double> tempAx = thread.getAx();
                     sumVectors(Ax, tempAx);
                 }
@@ -253,7 +259,7 @@ class checkerThread extends GivenSolutionFP implements Runnable {
 
                 synchronized (this) {
                     while (suspended) {
-                        for (workerThread thread : threads) {
+                        for (workerThreadSecond thread : threads) {
                             thread.resume();
                         }
                         totalTime += (System.nanoTime() - time) / 1000000000.0;
@@ -268,7 +274,7 @@ class checkerThread extends GivenSolutionFP implements Runnable {
         }
         Vector<Double> workersTime = new Vector<>();
         double workersTotalTime = 0;
-        for (workerThread thread : threads) {
+        for (workerThreadSecond thread : threads) {
             double tmp = thread.getTotalTime();
             workersTime.add(tmp);
             workersTotalTime += tmp;
@@ -276,8 +282,8 @@ class checkerThread extends GivenSolutionFP implements Runnable {
         System.out.println("checker total time - " + totalTime);
         System.out.println("workers time - "+ workersTime);
         System.out.println("sum of workers time - " + workersTotalTime);
-        System.out.println("sum of max - " + checkerMaxTime);
-        for (workerThread thread : threads) {
+        System.out.println("sum of max workers ticks - " + checkerMaxTime);
+        for (workerThreadSecond thread : threads) {
             thread.over();
         }
         long elapsedNanos = System.nanoTime() - startTime;
@@ -307,13 +313,16 @@ class checkerThread extends GivenSolutionFP implements Runnable {
         return flag;
     }
 
-    public void setThreads(ArrayList<workerThread> threads) {
+    public void setThreads(ArrayList<workerThreadSecond> threads) {
         this.threads = threads;
     }
 
-
     public Vector<Double> getX() {
         return x;
+    }
+
+    public double getXbyIndex(int i) {
+        return x.get(i);
     }
 }
 
