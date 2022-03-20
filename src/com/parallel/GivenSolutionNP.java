@@ -72,16 +72,16 @@ public class GivenSolutionNP extends Simple_Iteration{
     @Override
     public Vector<Double> step(Vector<Double> Ax,Vector<Double> b, Vector<Double> x) {
         Object tmpAx = Ax.clone();
-        Vector<Double> tmp = Simple_Iteration.subVectorFromVector((Vector<Double>) tmpAx,b);
+        Vector<Double> tmp = Simple_Iteration.subVectors((Vector<Double>) tmpAx,b);
         Simple_Iteration.mulVectorOnConst(tmp, scale);
-        tmp = Simple_Iteration.subVectorFromVector(x, tmp);
+        tmp = Simple_Iteration.subVectors(x, tmp);
         return tmp;
     }
 
     @Override
     public boolean isDone(Vector<Double> Ax,Vector<Double> b) {
         Object tmpAx = Ax.clone();
-        double u = Simple_Iteration.takeNorm(Simple_Iteration.subVectorFromVector((Vector<Double>) tmpAx,b));
+        double u = Simple_Iteration.takeNorm(Simple_Iteration.subVectors((Vector<Double>) tmpAx,b));
         double v = Simple_Iteration.takeNorm(b);
         return ((u/ v)<epsilon);
     }

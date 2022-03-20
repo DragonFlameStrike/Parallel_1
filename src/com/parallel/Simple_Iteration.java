@@ -14,9 +14,9 @@ import static java.lang.Math.sqrt;
  *
  */
 public abstract class Simple_Iteration {
-    static int VectorSize = 8192;
-    static int MatrixHight = 8192;
-    static int MatrixWeight = 8192;
+    static int VectorSize = 8192/16;
+    static int MatrixHight = 8192/16;
+    static int MatrixWeight = 8192/16;
     double epsilon = 0.000001;
     double scale = epsilon*10;
     abstract void initA(List<Double> A);
@@ -35,9 +35,15 @@ public abstract class Simple_Iteration {
             x.set(row,x.get(row)*t);
         }
     }
-    static Vector<Double> subVectorFromVector(Vector<Double> x, Vector<Double> y){
-        for(int row=0;row<VectorSize;row++){
+    static Vector<Double> subVectors(Vector<Double> x, Vector<Double> y){
+        for(int row=0;row<x.size();row++){
             x.set(row,x.get(row)-y.get(row));
+        }
+        return x;
+    }
+    static Vector<Double> sumVectors(Vector<Double> x, Vector<Double> y){
+        for(int row=0;row<x.size();row++){
+            x.set(row,x.get(row)+y.get(row));
         }
         return x;
     }
